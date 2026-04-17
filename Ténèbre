@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Le Don | Les Ténèbres</title>
+    
+    <link rel="icon" type="image/png" href="https://imgur.com/kIYSvXM.png">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Noto+Sans+JP:wght@300;700&family=Shojumaru&family=Cormorant+Garamond:ital,wght@1,500;1,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --kido-purple: #9d00ff;
+            --kido-glow: rgba(157, 0, 255, 0.6);
+            --bg-ultra-dark: #020002;
+            --text-main: #f5f5f5;
+            --transition-main: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        html { 
+            scroll-behavior: smooth; 
+            scrollbar-gutter: stable;
+        }
+
+        /* --- SCROLLBAR --- */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #050005;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #222;
+            border-radius: 10px;
+            border: 2px solid #050005;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--kido-purple);
+            box-shadow: 0 0 10px var(--kido-purple);
+        }
+
+        * { cursor: default; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-ultra-dark);
+            color: var(--text-main);
+            font-family: 'Noto Sans JP', sans-serif;
+            margin: 0;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+        }
+
+        body:has(.details-section:target) {
+            overflow: hidden;
+        }
+
+        #eyes-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+        }
+        .eye-pair {
+            position: absolute;
+            display: flex;
+            gap: 25px;
+            opacity: 0;
+            transition: opacity 2s ease;
+        }
+        .eye {
+            width: 15px;
+            height: 6px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 15px #fff, 0 0 25px var(--kido-purple);
+        }
+
+        .background-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            filter: blur(8px); 
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(60, 0, 120, 0.2) 0%, transparent 80%),
+                url('https://www.transparenttextures.com/patterns/asfalt-dark.png');
+            opacity: 0.85;
+            transform: scale(1.1);
+            will-change: transform;
+        }
+
+        .vignette {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, transparent 10%, rgba(0,0,0,0.98) 100%);
+            z-index: 0; pointer-events: none;
+        }
+
+        #sakura-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; pointer-events: none; opacity: 0.4; }
+
+        header {
+            position: fixed; width: 100%; padding: 30px 80px;
+            display: flex; justify-content: space-between; align-items: center;
+            z-index: 1000; transition: var(--transition-main);
+        }
+        header.scrolled { 
+            background: rgba(0,0,0,0.92); 
+            backdrop-filter: blur(20px); 
+            padding: 15px 80px; 
+            border-bottom: 1px solid rgba(157, 0, 255, 0.2); 
+        }
+
+        .logo-top { height: 70px; filter: drop-shadow(0 0 15px var(--kido-glow)) grayscale(1) brightness(1.5); transition: var(--transition-main); }
+        nav ul { display: flex; list-style: none; gap: 50px; }
+        nav ul li a { text-decoration: none; color: #fff; font-family: 'Cinzel'; font-size: 0.75rem; letter-spacing: 5px; opacity: 0.5; transition: 0.5s ease; }
+        nav ul li a:hover { opacity: 1; color: var(--kido-purple); text-shadow: 0 0 15px var(--kido-purple); }
+
+        .hero { position: relative; z-index: 3; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .mist-title { 
+            font-family: 'Shojumaru', cursive; font-size: clamp(3rem, 10vw, 6.5rem); 
+            color: #fff; text-shadow: 0 0 50px var(--kido-purple); 
+            margin: 0; line-height: 1.2; text-align: center; 
+            animation: pulseText 8s infinite ease-in-out; 
+        }
+        @keyframes pulseText { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.8; } }
+        .hero-subtitle { font-family: 'Cinzel'; color: var(--kido-purple); letter-spacing: 15px; font-size: 0.9rem; opacity: 0.8; margin-top: 15px; font-weight: 700; text-align: center; text-shadow: 0 0 10px rgba(157, 0, 255, 0.5); }
+
+        .main-section { position: relative; z-index: 3; padding: 0 12% 120px; }
+        .lore-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 40px; }
+
+        .clickable-card {
+            background: rgba(10, 0, 20, 0.45);
+            border: 1px solid rgba(157, 0, 255, 0.1);
+            padding: 70px 40px; border-radius: 4px;
+            transition: var(--transition-main);
+            text-align: center; backdrop-filter: blur(8px);
+            display: flex; flex-direction: column; align-items: center;
+            text-decoration: none; color: inherit;
+            will-change: transform, box-shadow;
+        }
+
+        .clickable-card:hover {
+            background: rgba(30, 0, 60, 0.6);
+            transform: translateY(-20px);
+            border-color: var(--kido-purple);
+            box-shadow: 0 30px 60px rgba(157, 0, 255, 0.2), inset 0 0 20px rgba(157, 0, 255, 0.1);
+            backdrop-filter: blur(15px); 
+        }
+
+        .logo-spell-grid { 
+            width: 160px; height: 160px; 
+            border-radius: 50%; 
+            margin-bottom: 35px; border: 1px solid var(--kido-purple); 
+            padding: 12px; filter: drop-shadow(0 0 10px var(--kido-glow)); 
+            transition: var(--transition-main);
+            object-fit: contain;
+        }
+
+        .clickable-card:hover .logo-spell-grid { 
+            filter: drop-shadow(0 0 30px var(--kido-purple));
+            transform: scale(1.1) rotate(8deg);
+        }
+
+        .clickable-card h3 { font-family: 'Cinzel'; font-size: 1.4rem; color: #fff; letter-spacing: 3px; margin-bottom: 15px; transition: 0.4s; }
+        .clickable-card:hover h3 { 
+            color: #fff; 
+            text-shadow: 2px 0 #9d00ff, -2px 0 #00d9ff;
+            transform: scale(1.05);
+        }
+        
+        .clickable-card p { font-family: 'Cormorant Garamond'; font-size: 1.25rem; color: #bbb; font-style: italic; line-height: 1.5; transition: 0.4s; }
+
+        /* Style pour la case scellée */
+        .clickable-card.locked {
+            filter: grayscale(1) brightness(0.5);
+            pointer-events: none;
+            cursor: not-allowed;
+            border-style: dashed;
+            opacity: 0.6;
+        }
+
+        .details-section { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.97); z-index: 3000; 
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; visibility: hidden;
+            backdrop-filter: blur(25px);
+            transition: opacity 0.8s cubic-bezier(0.23, 1, 0.32, 1), visibility 0.8s;
+            overflow: hidden;
+        }
+        
+        .details-section:target { opacity: 1; visibility: visible; }
+
+        .content-box { 
+            max-width: 900px; width: 92%; background: #030005; 
+            padding: 60px; border: 1px solid var(--kido-purple); 
+            position: relative; text-align: center;
+            box-shadow: 0 0 100px rgba(157, 0, 255, 0.2);
+            transform: translateY(100px) scale(0.9);
+            transition: transform 1s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        
+        .details-section:target .content-box { transform: translateY(0) scale(1); }
+
+        .corner-logo {
+            position: absolute; width: 45px; opacity: 0.6;
+            filter: drop-shadow(0 0 5px var(--kido-purple)) grayscale(1) brightness(1.5);
+            transition: 0.8s;
+        }
+        .corner-logo.top-left { top: 25px; left: 25px; }
+        .corner-logo.top-right { top: 25px; right: 25px; }
+
+        .btn-close { 
+            display: inline-block; padding: 15px 55px; margin-top: 40px; 
+            border: 1px solid var(--kido-purple); color: var(--kido-purple); 
+            text-decoration: none; font-family: 'Cinzel'; letter-spacing: 5px; 
+            transition: 0.5s ease; font-weight: 700; border-radius: 2px; 
+        }
+        .btn-close:hover { background: var(--kido-purple); color: #fff; box-shadow: 0 0 40px var(--kido-purple); transform: scale(1.05); }
+
+        .story-text {
+            font-family: 'Cormorant Garamond'; color: #ccc;
+            font-size: 1.35rem; line-height: 1.8; text-align: justify;
+            max-height: 50vh; 
+            overflow-y: auto;
+            padding-right: 25px; margin: 30px 0;
+            scroll-behavior: smooth;
+        }
+        
+        /* LETTRINE DÉSACTIVÉE */
+        .story-text::first-letter {
+            font-family: inherit; font-size: inherit; float: none;
+            margin-right: 0; color: inherit; line-height: inherit;
+            font-weight: inherit; text-shadow: none;
+        }
+
+        .text-section-divider {
+            display: block; margin-bottom: 25px;
+        }
+
+        .shadow-callout {
+            display: block; margin: 30px 0; padding: 25px;
+            border-left: 2px solid var(--kido-purple);
+            background: rgba(157, 0, 255, 0.05);
+            font-style: italic; color: #fff;
+        }
+        
+        .story-text::-webkit-scrollbar { width: 4px; }
+        .story-text::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
+        .story-text::-webkit-scrollbar-thumb { background: var(--kido-purple); border-radius: 10px; }
+        
+        .highlight-purple { color: var(--kido-purple); font-weight: bold; font-family: 'Cinzel'; text-shadow: 0 0 10px rgba(157,0,255,0.4); }
+
+        /* Styles additionnels pour les capacités */
+        .ability-entry {
+            text-align: left;
+            margin-bottom: 35px;
+            border-bottom: 1px solid rgba(157, 0, 255, 0.1);
+            padding-bottom: 15px;
+        }
+        .ability-name {
+            font-family: 'Cinzel';
+            color: #fff;
+            font-size: 1.2rem;
+            display: block;
+            margin-bottom: 5px;
+            text-shadow: 0 0 5px var(--kido-purple);
+        }
+        .ability-jp {
+            font-family: 'Noto Sans JP';
+            color: var(--kido-purple);
+            font-size: 0.9rem;
+            display: block;
+            margin-bottom: 10px;
+            opacity: 0.8;
+        }
+        .ability-desc {
+            font-family: 'Cormorant Garamond';
+            font-size: 1.15rem;
+            color: #bbb;
+            line-height: 1.5;
+        }
+
+        .audio-player { 
+            position: fixed; bottom: 40px; left: 40px; z-index: 2000; 
+            background: rgba(0,0,0,0.85); border: 1px solid rgba(157,0,255,0.3); 
+            padding: 15px 25px; border-radius: 100px; display: flex; 
+            align-items: center; backdrop-filter: blur(15px); transition: 0.4s; 
+        }
+        .audio-player:hover { border-color: var(--kido-purple); transform: scale(1.05); }
+        #volume-slider { width: 60px; accent-color: var(--kido-purple); margin-left: 15px; cursor: pointer; }
+
+    </style>
+</head>
+<body>
+
+    <div id="eyes-layer"></div>
+    <div class="background-container"></div>
+    <div class="vignette"></div>
+    <canvas id="sakura-canvas"></canvas>
+
+    <audio id="bg-audio" loop>
+        <source src="https://cdn.discordapp.com/attachments/1109868874427543647/1492534777407082536/Hermits_Gorge.mp3" type="audio/mpeg">
+    </audio>
+
+    <div class="audio-player">
+        <div id="music-toggle" style="cursor:pointer; color:var(--kido-purple); width: 20px;"><i class="fas fa-play" id="play-icon"></i></div>
+        <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="0.3">
+    </div>
+
+    <header id="main-header">
+        <img src="https://imgur.com/kIYSvXM.png" alt="Kido Logo" class="logo-top">
+        <nav>
+            <ul>
+                <li><a href="#home">MANUSCRIT</a></li>
+                <li><a href="#lore">ARCHIVES</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section id="home" class="hero">
+        <h1 class="mist-title" data-aos="zoom-out" data-aos-duration="2500">Le Don</h1>
+        <div class="hero-subtitle" data-aos="fade-up" data-aos-delay="600">LES TÉNÈBRES</div>
+    </section>
+
+    <section id="lore" class="main-section">
+        <div class="lore-grid">
+            <a href="#details-creation" class="clickable-card" data-aos="fade-up">
+                <img src="https://imgur.com/ZXddYLr.png" class="logo-spell-grid">
+                <h3>Les Ténèbres</h3>
+                <p>Le pouvoir né du divin..</p>
+            </a>
+
+            <a href="#details-shoseki" class="clickable-card" data-aos="fade-up" data-aos-delay="200">
+                <img src="https://imgur.com/aGjunyK.png" class="logo-spell-grid">
+                <h3>Entraînement Démoniaque</h3>
+                <p>La Manipulation des Ombres.</p>
+            </a>
+
+            <a href="#details-akai" class="clickable-card" data-aos="fade-up" data-aos-delay="400">
+                <img src="https://imgur.com/sYXmijy.png" class="logo-spell-grid" style="filter: hue-rotate(250deg) drop-shadow(0 0 10px var(--kido-purple));">
+                <h3>Pouvoir Sanguinaire</h3>
+                <p>Les Capacités Démoniaques du Pouvoir Sanguinaire des Ténèbres.</p>
+            </a>
+
+            <div class="clickable-card locked" data-aos="fade-up" data-aos-delay="600">
+                <img src="https://imgur.com/kIYSvXM.png" class="logo-spell-grid" style="filter: brightness(0.2) grayscale(1);">
+                <h3>Histoire</h3>
+                <p><i class="fas fa-lock"></i> Archive scellée...</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="details-creation" class="details-section">
+        <div class="content-box">
+            <img src="https://imgur.com/qKJ0iF6.png" class="corner-logo top-left">
+            <img src="https://imgur.com/qKJ0iF6.png" class="corner-logo top-right">
+            <h2 style="font-family:'Shojumaru'; font-size:2.8rem; color:var(--kido-purple); margin-bottom: 10px;">L'histoire de sa Création</h2>
+            <h4 style="font-family:'Cinzel'; color:#888; letter-spacing:3px; margin-bottom:20px;">L'HÉRITAGE CORROMPU</h4>
+            
+            <div class="story-text">
+                <span class="text-section-divider">
+                    Le Pouvoir démoniaque des ténèbres regroupe une élite de Démon élu par son dirigeant, l’ombre Éthérée, que seul ce dernier peut choisir les membres. Ce pouvoir est une part de soi-même, il représente le côté inexploité du Démon, une profonde partie issue d’un désir unique pour chacun.
+                </span>
+
+                <span class="text-section-divider">
+                    Ils possèdent des aptitudes d’exception afin de pouvoir réaliser des traques, grâce à leurs pouvoirs démoniaques, infiltration, dissimulation, ainsi que des emprises sont réalisables. Le relevé d’information est leur point fort, ils sont également capables de se déplacer à une grande vitesse. Les capacités sont très polyvalentes, utiles for le combat en étant stratégiques de manière offensive, comme il leur est très aisé de retourner la situation, en surprenant leurs adversaires. De même que for la manière de se battre, qui est unique, qui nécessitera la création d’une Double Lame Démoniaque afin d’exercer pleinement le potentiel des Ténèbres, cette dernière requiert une extrême dextérité et une aisance avec les armes de ce genre.
+                </span>
+
+                <span class="shadow-callout">
+                    Les Ténèbres possèdent une infinité de potentiel. Avec ceci, vous aurez la capacité d’être un manipulateur de vos capacités. Des Illusionnistes, il s’agit d’une capacité unique qui permet de générer et de contrôler des êtres nommés “ Les Ombres”, ces derniers ont une apparence horrifique, qu’il est possible de manipuler comme on le désire. 
+                </span>
+
+                <span class="text-section-divider">
+                    De plus, une forme peut être donnée aux Ombres, la forme d’objet est notamment réalisable. Cela représente la force majeure de ces démons, et donnera un aperçu de leur impact. 
+                </span>
+
+                <span class="text-section-divider" style="border-top: 1px solid rgba(157,0,255,0.1); padding-top: 20px; color: #888; font-style: italic;">
+                    Rejoindre ce pouvoir exige de grandes qualités, il faut savoir se démarquer et montrer aux autres ce dont on est capable. Des épreuves accessibles dès le rang B seront disponibles for les plus méritants. Armez-vous de vos savoirs, entraînez vous durement for tenter de réussir ces épreuves.
+                </span>
+            </div>
+
+            <a href="#lore" class="btn-close">FERMER LES ARCHIVES</a>
+        </div>
+    </section>
+
+    <section id="details-shoseki" class="details-section">
+        <div class="content-box">
+            <img src="https://imgur.com/qKJ0iF6.png" class="corner-logo top-left">
+            <img src="https://imgur.com/qKJ0iF6.png" class="corner-logo top-right">
+            <h2 style="font-family:'Shojumaru'; font-size:2.8rem; color:var(--kido-purple); margin-bottom: 10px;">Entraînement Démoniaque</h2>
+            <h4 style="font-family:'Cinzel'; color:#888; letter-spacing:3px; margin-bottom:20px;">LA VOIE DES OMBRES</h4>
+            <div class="story-text">
+                
+                <h3 style="font-family:'Cinzel'; color:var(--kido-purple); font-size:1.2rem; letter-spacing:2px; margin-top:0;">Entraînement à la Double Lame Démoniaque</h3>
+                <span class="text-section-divider">
+                    L'entraînement à la Double Lame Démoniaque vous invite à danser dans l'obscurité. Cherchez un endroit restreint, comme une forêt, et utilisez les arbres for comprendre les mouvements de votre double lame. Pratiquez des séries de saltos avant et arrière for maîtriser l'équilibre. Apprenez à manier la double lame avec une dextérité exceptionnelle. Comprenez que cette forme de combat peut s'avérer fatale en groupe si vous ne maîtrisez pas la position de vos alliés. Vous pourrez également participer à des entraînements en équipe, ainsi qu'à des duels amicaux.
+                </span>
+
+                <h3 style="font-family:'Cinzel'; color:var(--kido-purple); font-size:1.2rem; letter-spacing:2px;">Entraînement aux Ténèbres</h3>
+                <span class="text-section-divider">
+                    L’entraînement aux Ténèbres vous plonge dans l’obscurité la plus profonde. Trouvez un endroit à l’abri de tout regard et de toute lumière. Fermez les yeux et méditez. <span class="highlight-purple">(Roll x1)</span>
+                </span>
+                <span class="shadow-callout">
+                    Lorsque vous atteignez un état de concentration et de calme quasi parfait, invoquez votre puissance démoniaque for dévoiler une part des Ténèbres en vous. <span class="highlight-purple">(Roll x1)</span> Projetez alors votre esprit vers ce lieu intérieur et prenez-en pleinement conscience. Ce rituel vous permettra d’accroître votre puissance démoniaque grâce à ce don.
+                </span>
+
+                <h3 style="font-family:'Cinzel'; color:var(--kido-purple); font-size:1.2rem; letter-spacing:2px;">Entraînement à l'Obscurcissement</h3>
+                <span class="text-section-divider">
+                    Cet exercice approfondit la capacité des démons à devenir temporairement invisibles en maîtrisant l'obscurcissement. Les membres sont confrontés à un environnement complexe rempli d'obstacles et de faux ennemis. Leur tâche consiste à se déplacer silencieusement, à se fondre habilement dans les ombres for devenir presque indétectables, tout en restant conscients des obstacles et des ennemis qui se dressent sur leur chemin. L'objectif est de se déplacer avec précaution, d'éviter tout mouvement brusque, et de surprendre les adversaires, tout en restant attentifs à leur environnement immédiat. Cet entraînement renforce la maîtrise de l'obscurcissement, tout en développant les compétences de mobilité et de vigilance des démons.
+                </span>
+
+                <h3 style="font-family:'Cinzel'; color:var(--kido-purple); font-size:1.2rem; letter-spacing:2px;">Entraînement aux Ténèbres - La Manipulation des Ombres</h3>
+                <p style="font-style: italic; color: #888; font-size: 0.9rem; margin-top: -10px;">Cet entraînement peut être maîtrisé au-delà de 7 mois d'apprentissage.</p>
+                <span class="text-section-divider">
+                    Désormais, vous savez comment utiliser ce pouvoir, il ne manque plus qu’à contrôler votre puissance démoniaque, sinon cela vous fatiguera vite et en plein combat ce genre de choses sont à éviter un maximum. Voici quelques petits exercices pratiques for vous aider :
+                </span>
+                <span class="text-section-divider">
+                    Faire apparaître un objet du style un verre avec votre pouvoir démoniaque. Vous devrez maintenir son aspect le plus longtemps possible. <span class="highlight-purple">(Roll x1 for l’apparition du verre et 1 Roll for réguler l’aspect.)</span> Pour ce genre d’entraînement, vous avez l’embarras du choix for l’objet. Mais plus l’objet sera gros, en fonction de son aspect et des détails demandés, cela vous demandera plus de maîtrise de votre puissance démoniaque. En ayant à peine rejoint ce pouvoir, vous pourrez faire apparaître un objet pas plus gros qu’un verre.
+                </span>
+
+            </div>
+            <a href="#lore" class="btn-close">FERMER LES ARCHIVES</a>
+        </div>
+    </section>
+
+    <section id="details-akai" class="details-section">
+        <div class="content-box">
+            <img src="https://imgur.com/qKJ0iF6.png" class="corner-logo top-left">
+            <img src="https://imgur.com/qKJ0iF6.png" class="corner-logo top-right">
+            <h2 style="font-family:'Shojumaru'; font-size:2.8rem; color:var(--kido-purple); margin-bottom: 10px;">Pouvoir Sanguinaire</h2>
+            <h4 style="font-family:'Cinzel'; color:#888; letter-spacing:3px; margin-bottom:20px;">LES TECHNIQUES INTERDITES</h4>
+            <div class="story-text">
+                
+                <div class="ability-entry">
+                    <span class="ability-name">Méditation des Ténèbres</span>
+                    <span class="ability-jp">暗闇の瞑想</span>
+                    <span class="ability-desc">Une Capacité ayant for utilité de faire usage de votre Pouvoir Démoniaque des Ténèbres afin de vous régénérer.</span>
+                </div>
+
+                <div class="ability-entry">
+                    <span class="ability-name">Première Capacité - Allonge de l’Ombre</span>
+                    <span class="ability-jp">闇影の延長</span>
+                    <span class="ability-desc">Une Capacité offensive, qui vous permettra de porter un coup horizontal de gauche à droite ou inversement à mi-hauteur du corps. Vous irez mêler votre Pouvoir Démoniaque des Ténèbres afin de renforcer la puissance de ce coup.</span>
+                </div>
+
+                <div class="ability-entry">
+                    <span class="ability-name">Deuxième Capacité - Obscurcissement</span>
+                    <span class="ability-jp">難読化</span>
+                    <span class="ability-desc">Une Capacité qui vous permettra de disparaître grâce aux ténèbres, néanmoins cette invisibilité n’est pas totale, cela dépend de vos mouvements.</span>
+                </div>
+
+                <div class="ability-entry">
+                    <span class="ability-name">Troisième Capacité - Disparition de l’Ombre</span>
+                    <span class="ability-jp">影の消滅</span>
+                    <span class="ability-desc">Une Capacité qui vous permettra d'effectuer un saut dans la direction souhaitée, tout en créant un portail issu de vos Ténèbres. Utile for surprendre autrui dans n'importe quelle situation.</span>
+                </div>
+
+                <div class="ability-entry">
+                    <span class="ability-name">Quatrième Capacité - Griffe des Ténèbres</span>
+                    <span class="ability-jp">闇の爪</span>
+                    <span class="ability-desc">Une Capacité offensive où il faut effectuer un tour complet sur soi même, tout en dégageant votre Pouvoir Démoniaque des Ténèbres afin de blesser vos adversaires dans une zone tout autour de vous, et cela renforcera vos mouvements ainsi que votre puissance sur le moment de l'attaque.</span>
+                </div>
+
+                <div class="ability-entry">
+                    <span class="ability-name">Première Capacité Ultime - Explosion Déambulante</span>
+                    <span class="ability-jp">エクスプロージョン・デアンビュランテ</span>
+                    <span class="ability-desc">Déchaînement de votre Aura Démoniaque sur une zone qui vous enveloppera, et qui repoussera toutes personnes près de vous en les aveuglants.</span>
+                </div>
+
+                <div class="ability-entry">
+                    <span class="ability-name">Cinquième Capacité - Escarre Onduleuse</span>
+                    <span class="ability-jp">波状エスカー</span>
+                    <span class="ability-desc">Une Capacité ayant un prérequis, il faudra d'abord maîtriser la Deuxième Capacité. Ensuite, vous pourrez asséner un coup direct dans la nuque de votre cible tout en infusant de votre Pouvoir Démoniaque des Ténèbres afin de blesser mortellement votre proie.</span>
+                </div>
+
+                <div class="ability-entry">
+                    <span class="ability-name">Sixième Capacité - Pas Effroyable</span>
+                    <span class="ability-jp">ひどくはない</span>
+                    <span class="ability-desc">Une Capacité qui vous permettra d'envahir la vision de votre proie en lui rendant aveugle grâce aux Ténèbres que vous lui aurez transmis.</span>
+                </div>
+
+                <div class="ability-entry">
+                    <span class="ability-name">Septième Capacité / Première Capacité Ultime - Dévouement des Ténèbres</span>
+                    <span class="ability-jp">闇への献身</span>
+                    <span class="ability-desc">Une Capacité ayant un prix, afin d'obtenir la Capacité Ultime des Ténèbres, la plus puissante de toutes.</span>
+                </div>
+
+                <div class="ability-entry" style="border:none;">
+                    <span class="ability-name">Deuxième Capacité Ultime - Fumée du Désespoir</span>
+                    <span class="ability-jp">絶望 de l煙</span>
+                    <span class="ability-desc">Une Capacité offensive, il s'agit d'une propagation des Ténèbres que vous aurez cumulé en vous, et vous la laisserez s'échapper, ce qui gênera la visibilité dans une zone assez conséquente. Des créatures qui auront grandi en vous apparaîtront via votre Pouvoir Démoniaque des Ténèbres afin d'attaquer les personnes prises dans cette Capacité Ultime.</span>
+                </div>
+
+            </div>
+            <a href="#lore" class="btn-close">FERMER LES ARCHIVES</a>
+        </div>
+    </section>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({ duration: 1500, once: true, easing: 'ease-out-quint' });
+        
+        window.addEventListener('scroll', () => {
+            const header = document.getElementById('main-header');
+            if (window.scrollY > 80) header.classList.add('scrolled');
+            else header.classList.remove('scrolled');
+        });
+
+        const audio = document.getElementById('bg-audio');
+        const toggleBtn = document.getElementById('music-toggle');
+        const playIcon = document.getElementById('play-icon');
+        const volumeSlider = document.getElementById('volume-slider');
+
+        toggleBtn.addEventListener('click', () => {
+            if (audio.paused) { 
+                audio.play(); 
+                playIcon.className = 'fas fa-pause'; 
+            } else { 
+                audio.pause(); 
+                playIcon.className = 'fas fa-play'; 
+            }
+        });
+        volumeSlider.addEventListener('input', (e) => { audio.volume = e.target.value; });
+
+        function createEyes() {
+            const layer = document.getElementById('eyes-layer');
+            const pair = document.createElement('div');
+            pair.className = 'eye-pair';
+            const x = Math.random() * 90;
+            const y = Math.random() * 90;
+            pair.style.left = x + '%';
+            pair.style.top = y + '%';
+            pair.innerHTML = '<div class="eye"></div><div class="eye"></div>';
+            layer.appendChild(pair);
+            setTimeout(() => { pair.style.opacity = '1'; }, 100); 
+            setTimeout(() => { 
+                pair.style.opacity = '0'; 
+                setTimeout(() => pair.remove(), 2000);
+            }, 3000);
+        }
+        setInterval(createEyes, 4000); 
+
+        const canvas = document.getElementById('sakura-canvas');
+        const ctx = canvas.getContext('2d');
+        let w, h, petals = [];
+
+        function init() {
+            w = canvas.width = window.innerWidth;
+            h = canvas.height = window.innerHeight;
+            petals = Array.from({ length: 50 }, () => ({ 
+                x: Math.random() * w, y: Math.random() * h,
+                size: Math.random() * 4 + 1,
+                speed: Math.random() * 0.5 + 0.1,
+                angle: Math.random() * Math.PI * 2,
+                spin: Math.random() * 0.01,
+                color: Math.random() > 0.5 ? '#6a00ff' : '#2a0055'
+            }));
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, w, h);
+            petals.forEach(p => {
+                ctx.save(); 
+                ctx.translate(p.x, p.y); 
+                ctx.rotate(p.angle);
+                ctx.fillStyle = p.color; 
+                ctx.globalAlpha = 0.3;
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = p.color;
+                ctx.beginPath(); 
+                ctx.moveTo(0,0);
+                ctx.lineTo(p.size, p.size);
+                ctx.lineTo(0, p.size * 2);
+                ctx.fill(); 
+                ctx.restore();
+                
+                p.y += p.speed; 
+                p.x += Math.sin(p.angle) * 0.2;
+                p.angle += p.spin;
+                if (p.y > h) p.y = -20;
+            });
+            requestAnimationFrame(draw);
+        }
+        window.addEventListener('resize', init);
+        init(); draw();
+    </script>
+</body>
+</html>
